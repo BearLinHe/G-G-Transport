@@ -134,7 +134,7 @@ function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     const langBtn = document.getElementById('langBtn');
     langBtn.textContent = currentLang === 'zh' ? 'EN' : '中文';
-    
+
     // Update all elements with data-zh and data-en attributes
     document.querySelectorAll('[data-zh]').forEach(element => {
         const zhText = element.getAttribute('data-zh');
@@ -147,7 +147,7 @@ function toggleLanguage() {
 function toggleMobileMenu() {
     const navMenu = document.getElementById('navMenu');
     const hamburger = document.getElementById('hamburger');
-    
+
     navMenu.classList.toggle('active');
     hamburger.classList.toggle('active');
 }
@@ -163,7 +163,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 top: offsetTop,
                 behavior: 'smooth'
             });
-            
+
             // Close mobile menu if open
             const navMenu = document.getElementById('navMenu');
             if (navMenu.classList.contains('active')) {
@@ -180,43 +180,43 @@ const navbar = document.querySelector('.navbar');
 
 window.addEventListener('scroll', () => {
     const currentScroll = window.pageYOffset;
-    
+
     if (currentScroll > 100) {
         navbar.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
     } else {
         navbar.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
     }
-    
+
     lastScroll = currentScroll;
 });
 
 // Form Handling
 const contactForm = document.getElementById('contactForm');
 
-contactForm.addEventListener('submit', function(e) {
+contactForm.addEventListener('submit', function (e) {
     e.preventDefault();
-    
+
     const formData = {
         name: document.getElementById('name').value,
         email: document.getElementById('email').value,
         phone: document.getElementById('phone').value,
         message: document.getElementById('message').value
     };
-    
+
     // Here you would typically send the data to a server
     // For now, we'll just show an alert
     const submitBtn = this.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
-    
+
     submitBtn.textContent = currentLang === 'zh' ? '发送中...' : 'Sending...';
     submitBtn.disabled = true;
-    
+
     // Simulate form submission
     setTimeout(() => {
-        alert(currentLang === 'zh' 
-            ? '感谢您的留言！我们会尽快与您联系。' 
+        alert(currentLang === 'zh'
+            ? '感谢您的留言！我们会尽快与您联系。'
             : 'Thank you for your message! We will contact you soon.');
-        
+
         contactForm.reset();
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
@@ -241,20 +241,20 @@ const observer = new IntersectionObserver((entries) => {
 // Observe service cards and feature items
 document.addEventListener('DOMContentLoaded', () => {
     const animatedElements = document.querySelectorAll('.service-card, .feature-item, .about-text, .about-image');
-    
+
     animatedElements.forEach(el => {
         el.style.opacity = '0';
         el.style.transform = 'translateY(30px)';
         el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         observer.observe(el);
     });
-    
+
     // Initialize language button
     const langBtn = document.getElementById('langBtn');
     if (langBtn) {
         langBtn.addEventListener('click', toggleLanguage);
     }
-    
+
     // Initialize hamburger menu
     const hamburger = document.getElementById('hamburger');
     if (hamburger) {
@@ -266,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('scroll', () => {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-link');
-    
+
     let current = '';
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
@@ -275,7 +275,7 @@ window.addEventListener('scroll', () => {
             current = section.getAttribute('id');
         }
     });
-    
+
     navLinks.forEach(link => {
         link.classList.remove('active');
         if (link.getAttribute('href') === `#${current}`) {
