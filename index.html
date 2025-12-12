@@ -30,6 +30,7 @@
                     <li><a href="#home" class="nav-link">首页</a></li>
                     <li><a href="#services" class="nav-link">服务项目</a></li>
                     <li><a href="#about" class="nav-link">关于我们</a></li>
+                    <li><a href="#tracking" class="nav-link" data-zh="订单追踪" data-en="Tracking">订单追踪</a></li>
                     <li><a href="#contact" class="nav-link">联系我们</a></li>
                     <li class="lang-toggle">
                         <button id="langBtn" class="lang-btn">EN</button>
@@ -218,6 +219,42 @@
                     <h3 data-zh="专业服务" data-en="Professional Service">专业服务</h3>
                     <p data-zh="经验丰富的团队提供专业咨询和服务"
                         data-en="Experienced team provides professional consultation and service">经验丰富的团队提供专业咨询和服务</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tracking Section -->
+    <section id="tracking" class="tracking">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title" data-zh="订单追踪" data-en="Order Tracking">订单追踪</h2>
+                <p class="section-subtitle" data-zh="实时查询您的货物运输状态" data-en="Track your shipment in real-time">
+                    实时查询您的货物运输状态</p>
+            </div>
+            <div class="tracking-wrapper">
+                <div class="tracking-input-section">
+                    <div class="tracking-input-group">
+                        <input type="text" id="trackingNumber" class="tracking-input" placeholder="请输入8位订单号（字母或数字）"
+                            data-zh-placeholder="请输入8位订单号（字母或数字）"
+                            data-en-placeholder="Enter 8-character tracking number (letters or numbers)" maxlength="8"
+                            pattern="[A-Za-z0-9]{8}">
+                        <button type="button" id="generateTrackingBtn" class="btn btn-secondary" data-zh="生成随机订单号"
+                            data-en="Generate Random Number">生成随机订单号</button>
+                        <button type="button" id="trackBtn" class="btn btn-primary" data-zh="查询"
+                            data-en="Track">查询</button>
+                    </div>
+                </div>
+                <div id="trackingResult" class="tracking-result" style="display: none;">
+                    <div class="tracking-header">
+                        <div class="tracking-number-display">
+                            <span data-zh="客户单号：" data-en="Customer Order Number: ">客户单号：</span>
+                            <strong id="displayTrackingNumber"></strong>
+                        </div>
+                    </div>
+                    <div class="tracking-timeline">
+                        <div id="trackingTimelineContent"></div>
+                    </div>
                 </div>
             </div>
         </div>

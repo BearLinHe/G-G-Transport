@@ -6,6 +6,7 @@ const translations = {
         '首页': '首页',
         '服务项目': '服务项目',
         '关于我们': '关于我们',
+        '订单追踪': '订单追踪',
         '联系我们': '联系我们',
         '专业物流运输服务': '专业物流运输服务',
         '全美范围的卡车派送、仓储服务、FBA直送一站式解决方案': '全美范围的卡车派送、仓储服务、FBA直送一站式解决方案',
@@ -69,6 +70,7 @@ const translations = {
         '首页': 'Home',
         '服务项目': 'Services',
         '关于我们': 'About',
+        '订单追踪': 'Tracking',
         '联系我们': 'Contact',
         '专业物流运输服务': 'Professional Logistics & Transportation',
         '全美范围的卡车派送、仓储服务、FBA直送一站式解决方案': 'Nationwide Trucking, Warehousing, FBA Delivery & Complete Logistics Solutions',
@@ -134,13 +136,27 @@ function toggleLanguage() {
     currentLang = currentLang === 'zh' ? 'en' : 'zh';
     const langBtn = document.getElementById('langBtn');
     langBtn.textContent = currentLang === 'zh' ? 'EN' : '中文';
-
+    
     // Update all elements with data-zh and data-en attributes
     document.querySelectorAll('[data-zh]').forEach(element => {
         const zhText = element.getAttribute('data-zh');
         const enText = element.getAttribute('data-en');
         element.textContent = currentLang === 'zh' ? zhText : enText;
     });
+    
+    // Update placeholder for tracking input
+    const trackingInput = document.getElementById('trackingNumber');
+    if (trackingInput) {
+        const placeholder = trackingInput.getAttribute(currentLang === 'zh' ? 'data-zh-placeholder' : 'data-en-placeholder');
+        trackingInput.placeholder = placeholder;
+    }
+    
+    // Re-display tracking if there's an active tracking result
+    const displayTrackingNumber = document.getElementById('displayTrackingNumber');
+    if (displayTrackingNumber && displayTrackingNumber.textContent) {
+        const trackingNumber = displayTrackingNumber.textContent;
+        displayTracking(trackingNumber);
+    }
 }
 
 // Mobile Menu Toggle
@@ -266,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('scroll', () => {
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-link');
-
+    
     let current = '';
     sections.forEach(section => {
         const sectionTop = section.offsetTop;
@@ -275,12 +291,275 @@ window.addEventListener('scroll', () => {
             current = section.getAttribute('id');
         }
     });
-
+    
     navLinks.forEach(link => {
         link.classList.remove('active');
         if (link.getAttribute('href') === `#${current}`) {
             link.classList.add('active');
         }
     });
+});
+
+// Tracking System
+const chinesePorts = ['深圳港', '宁波港', '上海港', '青岛港', '天津港', '广州港'];
+const oaklandPorts = ['OICT (Oakland International Container Terminal)', 'ETS (Evergreen Terminal Services)', 'TRAPAC (TraPac Terminal)'];
+const transitLocations = [
+    { name: '太平洋中转站', en: 'Pacific Transit Hub' },
+    { name: '洛杉矶港', en: 'Port of Los Angeles' },
+    { name: '长滩港', en: 'Port of Long Beach' },
+    { name: '旧金山湾', en: 'San Francisco Bay' },
+    { name: '奥克兰海关', en: 'Oakland Customs' }
+];
+
+// Seeded random number generator for deterministic results
+class SeededRandom {
+    constructor(seed) {
+        this.seed = seed;
+    }
+    
+    // Simple linear congruential generator
+    next() {
+        this.seed = (this.seed * 9301 + 49297) % 233280;
+        return this.seed / 233280;
+    }
+    
+    // Get random integer between min and max (inclusive)
+    nextInt(min, max) {
+        return Math.floor(this.next() * (max - min + 1)) + min;
+    }
+}
+
+function generateTrackingNumber() {
+    // Generate 8-character alphanumeric code
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// Convert alphanumeric string to numeric seed
+function stringToSeed(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+}
+
+function generateTrackingData(trackingNumber) {
+    // Use tracking number as seed for deterministic results
+    const seed = stringToSeed(trackingNumber.toUpperCase());
+    const rng = new SeededRandom(seed);
+    
+    // Generate deterministic dates based on seed - 发货时间 7-9月，到港时间 9-11月
+    const startMonth = rng.nextInt(7, 9); // 7-9月
+    const startDay = rng.nextInt(1, 28);
+    const startDate = new Date(2024, startMonth - 1, startDay, 17 + rng.nextInt(0, 5), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    
+    const endMonth = rng.nextInt(9, 11); // 9-11月
+    const endDay = rng.nextInt(1, 28);
+    const endDate = new Date(2024, endMonth - 1, endDay, 9 + rng.nextInt(0, 2), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    
+    // Calculate time intervals
+    const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24));
+    
+    const originPort = chinesePorts[rng.nextInt(0, chinesePorts.length - 1)];
+    const destinationPort = oaklandPorts[rng.nextInt(0, oaklandPorts.length - 1)];
+    
+    const trackingEvents = [];
+    
+    // 1. 已下单 (Order placed)
+    const orderDate = new Date(startDate);
+    orderDate.setDate(orderDate.getDate() - rng.nextInt(0, 1));
+    orderDate.setHours(17 + rng.nextInt(0, 5), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    trackingEvents.push({
+        status: 'completed',
+        title: currentLang === 'zh' ? '已下单' : 'Order placed',
+        time: formatDateFull(orderDate)
+    });
+    
+    // 2. 集散中心已收货
+    const receiveDate = new Date(startDate);
+    receiveDate.setDate(receiveDate.getDate() - rng.nextInt(0, 0));
+    receiveDate.setHours(19 + rng.nextInt(0, 3), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    const portName = originPort.replace('港', '');
+    trackingEvents.push({
+        status: 'completed',
+        title: currentLang === 'zh' ? `${portName}集散中心已收货,*CN` : `${portName} Distribution Center has received goods,*CN`,
+        time: formatDateFull(receiveDate)
+    });
+    
+    // 3. 已装柜，预计开船
+    const loadDate = new Date(startDate);
+    loadDate.setDate(loadDate.getDate() - 2);
+    loadDate.setHours(20 + rng.nextInt(0, 2), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    const sailDay = startDate.getDate();
+    const sailMonth = startDate.getMonth() + 1;
+    trackingEvents.push({
+        status: 'completed',
+        title: currentLang === 'zh' ? `您好,已装柜,预计${sailMonth}.${sailDay}开船` : `Hello, container loaded, estimated departure on ${sailMonth}.${sailDay}`,
+        time: formatDateFull(loadDate)
+    });
+    
+    // 4. 已开船，预计到港
+    const sailDate = new Date(startDate);
+    sailDate.setHours(0 + rng.nextInt(0, 1), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    const arriveDay = endDate.getDate() - 1;
+    const arriveMonth = endDate.getMonth() + 1;
+    trackingEvents.push({
+        status: 'completed',
+        title: currentLang === 'zh' ? `您好,已开船,预计当地${arriveMonth}.${arriveDay}到港` : `Hello, vessel has departed, estimated arrival at local port on ${arriveMonth}.${arriveDay}`,
+        time: formatDateFull(sailDate)
+    });
+    
+    // 5. 船司更新：预计到港
+    const updateDate = new Date(endDate);
+    updateDate.setDate(updateDate.getDate() - 1);
+    updateDate.setHours(12 + rng.nextInt(0, 1), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    const estDay = endDate.getDate();
+    const estMonth = endDate.getMonth() + 1;
+    trackingEvents.push({
+        status: 'completed',
+        title: currentLang === 'zh' ? `您好,船司更新:预计当地${estMonth}.${estDay}到港` : `Hello, shipping company update: estimated arrival at local port on ${estMonth}.${estDay}`,
+        time: formatDateFull(updateDate)
+    });
+    
+    // 6. 已到港，清关放行
+    const arriveDate = new Date(endDate);
+    arriveDate.setHours(9 + rng.nextInt(0, 1), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    trackingEvents.push({
+        status: 'completed',
+        title: currentLang === 'zh' ? '您好,已到港,清关放行。柜子已卸船,在预约提柜中' : 'Hello, arrived at port, customs cleared. Container has been unloaded, awaiting scheduled pickup',
+        time: formatDateFull(arriveDate)
+    });
+    
+    // 7. 预约提柜
+    const pickupDate = new Date(endDate);
+    pickupDate.setDate(pickupDate.getDate() + 1);
+    pickupDate.setHours(9 + rng.nextInt(0, 1), rng.nextInt(0, 59), rng.nextInt(0, 59));
+    const pickupDay = pickupDate.getDate();
+    const pickupMonth = pickupDate.getMonth() + 1;
+    trackingEvents.push({
+        status: 'active',
+        title: currentLang === 'zh' ? `您好,预约当地${pickupMonth}.${pickupDay}提柜` : `Hello, scheduled local container pickup for ${pickupMonth}.${pickupDay}`,
+        time: formatDateFull(pickupDate)
+    });
+    
+    // Reverse order (newest first)
+    return trackingEvents.reverse();
+}
+
+function formatDateFull(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+function displayTracking(trackingNumber) {
+    const trackingResult = document.getElementById('trackingResult');
+    const displayTrackingNumber = document.getElementById('displayTrackingNumber');
+    const trackingTimelineContent = document.getElementById('trackingTimelineContent');
+    
+    displayTrackingNumber.textContent = trackingNumber;
+    
+    const trackingData = generateTrackingData(trackingNumber);
+    
+    trackingTimelineContent.innerHTML = '';
+    
+    trackingData.forEach((event, index) => {
+        const item = document.createElement('div');
+        item.className = `tracking-item ${event.status}`;
+        
+        item.innerHTML = `
+            <div class="tracking-item-content">
+                <div class="tracking-item-title">${event.title}</div>
+                <div class="tracking-item-time">${event.time}</div>
+            </div>
+        `;
+        
+        trackingTimelineContent.appendChild(item);
+    });
+    
+    trackingResult.style.display = 'block';
+    
+    // Scroll to tracking result
+    trackingResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Initialize tracking functionality
+document.addEventListener('DOMContentLoaded', () => {
+    const generateBtn = document.getElementById('generateTrackingBtn');
+    const trackBtn = document.getElementById('trackBtn');
+    const trackingInput = document.getElementById('trackingNumber');
+    
+    if (generateBtn) {
+        generateBtn.addEventListener('click', () => {
+            const randomNumber = generateTrackingNumber();
+            trackingInput.value = randomNumber;
+        });
+    }
+    
+    function validateTrackingNumber(trackingNumber) {
+        const trimmed = trackingNumber.trim().toUpperCase();
+        if (!trimmed) {
+            return { valid: false, message: currentLang === 'zh' ? '请输入订单号' : 'Please enter a tracking number' };
+        }
+        if (!/^[A-Z0-9]{8}$/.test(trimmed)) {
+            return { valid: false, message: currentLang === 'zh' ? '订单号必须是8位字母或数字' : 'Tracking number must be 8 characters (letters or numbers)' };
+        }
+        return { valid: true, normalized: trimmed };
+    }
+
+    if (trackBtn) {
+        trackBtn.addEventListener('click', () => {
+            const trackingNumber = trackingInput.value.trim();
+            const validation = validateTrackingNumber(trackingNumber);
+            if (validation.valid) {
+                // Use normalized (uppercase) version
+                displayTracking(validation.normalized);
+                // Update input to normalized version
+                trackingInput.value = validation.normalized;
+            } else {
+                alert(validation.message);
+                trackingInput.focus();
+            }
+        });
+    }
+    
+    if (trackingInput) {
+        // Convert to uppercase and only allow alphanumeric
+        trackingInput.addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase();
+            value = value.replace(/[^A-Z0-9]/g, '');
+            e.target.value = value;
+        });
+
+        trackingInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const trackingNumber = trackingInput.value.trim();
+                const validation = validateTrackingNumber(trackingNumber);
+                if (validation.valid) {
+                    displayTracking(validation.normalized);
+                    trackingInput.value = validation.normalized;
+                } else {
+                    alert(validation.message);
+                    trackingInput.focus();
+                }
+            }
+        });
+        
+        // Set initial placeholder
+        const placeholder = trackingInput.getAttribute(currentLang === 'zh' ? 'data-zh-placeholder' : 'data-en-placeholder');
+        trackingInput.placeholder = placeholder;
+    }
 });
 
